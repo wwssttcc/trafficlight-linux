@@ -76,5 +76,6 @@ typedef struct LightInfo{
 #pragma pack()
 
 extern uint8_t g_online_num;
+extern int send_trafficlight_info(uint8_t *buf, uint8_t online_num);
 pthread_t trafficLightInit();
 #endif

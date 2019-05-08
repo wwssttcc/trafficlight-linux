@@ -207,7 +207,8 @@ void trafficLightStudy(uint8_t online_num)
 				{
 					//计算出当前红绿灯周期
 					g_trafficlight[dir][to].light_period_study[g_trafficlight[dir][to].last_light] = (g_trafficlight[dir][to].current_ticks_study - g_trafficlight[dir][to].start_ticks_study + 50) / 100;
-					g_trafficlight[dir][to].light_period[g_trafficlight[dir][to].last_light] = g_trafficlight[dir][to].light_period_study[g_trafficlight[dir][to].last_light];
+					if(g_trafficlight[dir][to].light_period_study[g_trafficlight[dir][to].last_light] > 0)
+						g_trafficlight[dir][to].light_period[g_trafficlight[dir][to].last_light] = g_trafficlight[dir][to].light_period_study[g_trafficlight[dir][to].last_light];
 					g_trafficlight[dir][to].total_ticks = g_trafficlight[dir][to].current_ticks_study - g_trafficlight[dir][to].start_ticks_study;
 					printf("dir %d to %d, light %d total_ticks %lld\n", dir, to, g_trafficlight[dir][to].current_light, g_trafficlight[dir][to].total_ticks);
 				}
@@ -316,6 +317,9 @@ int trafficLightStatus(LightInfo *light_info, uint8_t num)
 	light_info->last_seconds = g_trafficlight[dir][to].light_period[light_info->light] - total_ticks / 100 - 1;
 	g_trafficlight[dir][to].last_seconds[light_info->light] = light_info->last_seconds; 
 	
+	if(light_info->last_seconds == 255)
+		return 3;
+	
 	if(light_info->last_seconds == 0)
 	{
 		light_info->light++;
@@ -387,13 +391,16 @@ int trafficLightStatus(LightInfo *light_info, uint8_t num)
 		return 1;
 }
 
-void send_trafficlight_info(uint8_t *buf, uint8_t online_num)
+int send_trafficlight_info(uint8_t *buf, uint8_t online_num)
 {
 	uint8_t i;
+	int ret;
 	LightInfo light_info;
 	for(i = 0; i < online_num; i++)
 	{
-		trafficLightStatus(&light_info, i);
+		ret = trafficLightStatus(&light_info, i);
+		if(ret == 3)
+			return ret;
 		memcpy(buf+sizeof(LightInfo) * i, &light_info, sizeof(LightInfo));
 	}
 	

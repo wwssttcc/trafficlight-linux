@@ -52,6 +52,7 @@ void *tl_recv_thread(void *arg)
 		int newsock = (int)arg;
 		char buf[200];
 		char send_buf[200];
+		int ret, i = 0;
 		while(1)
 		{
 				int recv_num = read(newsock, buf, sizeof(buf) - 1);
@@ -60,9 +61,15 @@ void *tl_recv_thread(void *arg)
 						buf[recv_num] = '\0';
 						if(buf[0] == 0xaa)
 						{
-							send_trafficlight_info(send_buf, g_online_num);
-							write(newsock, send_buf, g_online_num * sizeof(LightInfo));
+							i++;
+							ret = send_trafficlight_info(send_buf, g_online_num);
+							if(ret != 3)
+								write(newsock, send_buf, g_online_num * sizeof(LightInfo));
 							printf("------------trafficlight data------------\n");
+							if(i % 2 == 0)
+								system("echo 0 > /sys/class/leds/net/brightness");
+							else
+								system("echo 255 > /sys/class/leds/net/brightness");
 						}
 				}
 				else if(recv_num == 0)
